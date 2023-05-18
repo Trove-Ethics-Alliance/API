@@ -33,7 +33,6 @@ log.info('Initializing project...');
 setTimeout(() => {
     try {
         if (!(mongoose.connections.slice(1).every(conn => conn.readyState === 1))) {
-            // log.info('Not all MongoDB connections are established.', mongoose.connections.slice(1).map(c => `${c.name ? c.name : 'Unknown'} (${c.readyState})`).join(' :: '));
             process.exit(`[MongoDB] Connections are not established! ${mongoose.connections.slice(1).map(c => `${c.name ? c.name : 'Unknown'} (${c.readyState})`).join(' :: ')}`);
         }
         log.info('[MongoDB] Connection list:', mongoose.connections.slice(1).map(c => `${c.name ? c.name : 'Unknown'} (${c.readyState})`).join(' :: '));
