@@ -1,0 +1,28 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "description": "API for TEA",
+  "main": "api.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Trove-Ethics-Alliance/API.git"
+  },
+  "author": "Rafski",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Trove-Ethics-Alliance/API/issues"
+  },
+  "homepage": "https://github.com/Trove-Ethics-Alliance/API#readme",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.20.2",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.0",
+    "moment": "^2.29.4",
+    "mongoose": "^7.1.1"
+  }
+}
