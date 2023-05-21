@@ -18,11 +18,16 @@ require('./Addons/Process')(app);
 app.use(require('./Addons/ExpressLogs'));
 
 // Restricted API endpoints.
-app.use('/api/v1', require('./Routes/Restricted/Data')); // /data endpoint.
+app.use('/v1', require('./Routes/Restricted/Data')); // /data endpoint.
 
 // Public API endpoints.
-app.use('/api/v1', require('./Routes/Public/Authorization')); // /login, /register endpoints.
-app.use('/api/v1', require('./Routes/Public/Welcome')); // Main GET Home route.
+app.use('/v1', require('./Routes/Public/Authorization')); // /login, /register endpoints.
+
+
+app.use('/v1', require('./Routes/Public/Welcome')); // Main APIv1 GET Home route.
+app.use('/', require('./HTML/Welcome')); // Main / GET Home route.
+// Front-end
+
 
 // Invalid endpoint handler.
 app.all('*', (req, res) => {
