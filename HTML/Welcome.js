@@ -7,7 +7,7 @@ const indexFilePath = path.join(__dirname, 'index.html');
 
 router.get('/', async (req, res) => {
     try {
-        res.status(200).sendFile(indexFilePath);
+        res.status(200).type('html').sendFile(indexFilePath);
 
     } catch (error) {
         log.bug('Error to home route:', error);
