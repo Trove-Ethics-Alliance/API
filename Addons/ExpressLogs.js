@@ -4,7 +4,6 @@ const log = require('./Logger');
 
 module.exports = async (req, res, next) => {
     try {
-        log.warn('IP', req.rawHeaders[1]);
         // Disable the default 'X-Powered-By' header
         app.disable('x-powered-by');
 

@@ -34,7 +34,7 @@ const authJWT = async (req, res, next) => {
     } catch (err) {
 
         // Response to the invalid token.
-        if (err.message === 'invalid token') {
+        if (err.message === 'jwt malformed') {
             log.warn(`[Auth] Invalid token is received at at '[${req.method}] ${req.originalUrl}'`);
             return res.status(401).json({ message: 'Authentication failed - invalid token' });
         }
