@@ -29,7 +29,6 @@ const authJWT = async (req, res, next) => {
         }
 
         // Call next() to pass control to the next middleware.
-        log.info(`[Auth] Verified '${req.user}' at '[${req.method}] ${req.originalUrl}'.`);
         next();
     } catch (err) {
 
