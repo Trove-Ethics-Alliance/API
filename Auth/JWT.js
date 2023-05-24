@@ -30,16 +30,15 @@ const authJWT = async (req, res, next) => {
 
         // Call next() to pass control to the next middleware.
         next();
-    } catch (err) {
+    } catch (error) {
 
-        // Response to the invalid token.
-        if (err.message === 'jwt malformed') {
-            log.warn(`[Auth] Invalid token is received at at '[${req.method}] ${req.originalUrl}'`);
-            return res.status(401).json({ message: 'Authentication failed - invalid token' });
+        if (error.name === 'JsonWebTokenError') {
+            log.warn(`[Auth] JTW Token Error at '[${req.method}] ${req.originalUrl}'`, error.message);
+            return res.status(401).json({ message: 'Authentication Failed' });
         }
 
         // Response to the server error.
-        log.bug('Error processing JWT verification', err);
+        log.bug('Error processing JWT verification', error);
         return res.status(500).send({ message: 'Internal Server Error, try again later.' });
     }
 };
