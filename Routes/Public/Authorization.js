@@ -97,4 +97,4 @@ module.exports = {
     name: fileName,
     enabled: true,
     router
-}
+};

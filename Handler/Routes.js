@@ -4,6 +4,7 @@ const { glob } = require('glob');
 const path = require('path');
 
 async function loadAPIRoutes(app) {
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
         log.debug('[LOAD ROUTES] Started loading api routes.');
 
@@ -20,7 +21,7 @@ async function loadAPIRoutes(app) {
 
             for (const file of apiRouteFiles) {
                 try {
-                    
+
                     // Get full path to the button file.
                     const route_dir_root = path.join(process.cwd(), file);
 
@@ -36,8 +37,6 @@ async function loadAPIRoutes(app) {
 
                     // Check if API Route is enabled.
                     if (!apiRoute.enabled) continue;
-
-                    console.log(route_dir_root);
 
                     // Load Enabled Routes.
                     app.use('/v1', apiRoute.router);
@@ -57,10 +56,10 @@ async function loadAPIRoutes(app) {
                 resolve(table.toString());
             }
         } catch (error) {
-            reject(`Error loading API Route files ${file}: ${error.message}`);
+            reject(`Error loading API Route files ${error.message}`);
         }
 
-        log.debug(`🆗 [LOAD ROUTES] Finished loading API Routes Handler.`);
+        log.debug('🆗 [LOAD ROUTES] Finished loading API Routes Handler.');
     });
 }
 
