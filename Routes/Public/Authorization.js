@@ -5,6 +5,10 @@ const { isAlphanumericLowercase } = require('../../Addons/Functions');
 const { mongoUser } = require('../../Mongo/Models/User');
 const log = require('../../Addons/Logger');
 const router = express.Router();
+const path = require('path');
+
+// Get file name.
+const fileName = path.basename(__filename).slice(0, -3);
 
 
 router.post('/login', async (req, res) => {
@@ -89,4 +93,8 @@ router.post('/register', async (req, res) => {
     }
 });
 
-module.exports = router;
+module.exports = {
+    name: fileName,
+    enabled: true,
+    router
+};
