@@ -10,7 +10,7 @@ async function loadAPIRoutes(app) {
 
         // Create a new table
         const table = new AsciiTable('API Routes');
-        table.setHeading('Status', 'Name', 'File');
+        table.setHeading('Status', 'Path Name', 'File');
 
         // Set Route Number.
         let routeNumber = 0;
@@ -28,10 +28,19 @@ async function loadAPIRoutes(app) {
                     // Assign variable to the API Route file.
                     const apiRoute = require(route_dir_root);
 
+                    let routePath;
+                    for (let index = 0; index < apiRoute.router.stack.length; index++) {
+                        if (routePath === undefined) {
+                            routePath = `[${apiRoute.router.stack[index].route.path}]`;
+                        } else {
+                            routePath = `${routePath}[${apiRoute.router.stack[index].route.path}]`;
+                        }
+                    }
+
                     // Add table row for this API Route.
                     table.addRow(
                         apiRoute.enabled ? 'ENABLED' : 'DISABLED',
-                        apiRoute.name,
+                        routePath,
                         file.split('/').slice(-4).join('/')
                     );
 
