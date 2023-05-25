@@ -1,6 +1,9 @@
 const express = require('express');
 const log = require('../../Addons/Logger');
 const router = express.Router();
+const path = require('path');
+
+const fileName = path.basename(__filename).slice(0, -3);
 
 router.get('/', async (req, res) => {
     try {
@@ -12,4 +15,8 @@ router.get('/', async (req, res) => {
     }
 });
 
-module.exports = router;
+module.exports = {
+    name: fileName,
+    enabled: true,
+    router
+}

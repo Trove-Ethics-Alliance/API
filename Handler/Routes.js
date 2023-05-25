@@ -1,0 +1,67 @@
+const log = require('../Addons/Logger');
+const AsciiTable = require('ascii-table');
+const { glob } = require('glob');
+const path = require('path');
+
+async function loadAPIRoutes(app) {
+    return new Promise(async (resolve, reject) => {
+        log.debug('[LOAD ROUTES] Started loading api routes.');
+
+        // Create a new table
+        const table = new AsciiTable('API Routes');
+        table.setHeading('Status', 'Name', 'File');
+
+        // Set Route Number.
+        let routeNumber = 0;
+
+        try {
+            // Load API Routes files.
+            const apiRouteFiles = await glob('Routes/**/*.js');
+
+            for (const file of apiRouteFiles) {
+                try {
+                    
+                    // Get full path to the button file.
+                    const route_dir_root = path.join(process.cwd(), file);
+
+                    // Assign variable to the API Route file.
+                    const apiRoute = require(route_dir_root);
+
+                    // Add table row for this API Route.
+                    table.addRow(
+                        apiRoute.enabled ? 'ENABLED' : 'DISABLED',
+                        apiRoute.name,
+                        file.split('/').slice(-4).join('/')
+                    );
+
+                    // Check if API Route is enabled.
+                    if (!apiRoute.enabled) continue;
+
+                    console.log(route_dir_root);
+
+                    // Load Enabled Routes.
+                    app.use('/v1', apiRoute.router);
+
+                    // Add one Route Number.
+                    routeNumber = routeNumber + 1;
+
+                } catch (error) {
+                    reject(`Error loading API Route files ${error.message}`);
+                }
+            }
+
+            // Send a log command when there are no Routes loaded.
+            if (routeNumber === 0) {
+                resolve('[LOAD ROUTES] ❌ No enabled API Routes were found.');
+            } else {
+                resolve(table.toString());
+            }
+        } catch (error) {
+            reject(`Error loading API Route files ${file}: ${error.message}`);
+        }
+
+        log.debug(`🆗 [LOAD ROUTES] Finished loading API Routes Handler.`);
+    });
+}
+
+module.exports = loadAPIRoutes;
