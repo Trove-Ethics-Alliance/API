@@ -8,6 +8,23 @@ function isAlphanumericLowercase(username) {
     return alphanumericLowercaseRegex.test(username);
 }
 
+/**
+ * Converts a string to the specified format.
+ * @param {String} str - The input string to convert.
+ * @returns {String} - The converted string in the specified format.
+ */
+function convertStringToMongoID(str) {
+    // Convert to lowercase.
+    const lowercaseStr = str.toLowerCase();
+
+    // Replace spaces with hyphens.
+    const formattedStr = lowercaseStr.replace(/\s+/g, '-');
+
+    // Return the formatted sting.
+    return formattedStr;
+}
+
 module.exports = {
-    isAlphanumericLowercase
+    isAlphanumericLowercase,
+    convertStringToMongoID
 };
