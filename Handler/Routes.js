@@ -9,7 +9,7 @@ async function loadAPIRoutes(app) {
         log.debug('[LOAD ROUTES] Started loading api routes.');
 
         // Create a new table
-        const table = new AsciiTable('API Routes');
+        const table = new AsciiTable('API Routes v1');
         table.setHeading('Status', 'Path Name', 'File');
 
         // Set Route Number.
