@@ -62,6 +62,47 @@ router.get('/certificate/guild', authJWT, (req, res) => {
     res.status(200).json({ message: `Welcome ${req.user}! This is your certificate GET ${club_id} | ${club_name} data endpoint.` });
 });
 
+// Endpoint to get certificate data from a guild
+router.get('/certificate/data', authJWT, async (req, res) => {
+    
+    try {
+        const club_id = req.query.id;
+    
+        // Check if guild Exists
+        const guildExist = await mongoCertificate.findOne({ 'discord.id': req.query.id });
+        if (!guildExist) return res.status(404).json({ message: 'Guild not found in database' });
+    
+        // Return the results
+        res.json({ certificate: guildExist });
+
+    } catch (error) {
+        new APIError(fileName, error, res);
+    }
+});
+
+router.post('/certificate/data', authJWT, async (req, res) => {
+
+    try {
+        
+        // Find the guild
+        const guildExist = await mongoCertificate.findOne({ 'discord.id': req.body.discord.id });
+        if (!guildExist) return res.status(404).json({ message: 'Guild not found in database'});
+
+        // Apply the updates from the JSON to the object to the found document
+        Object.assign(guildExist, req.body);
+
+        // Save the modified document back to the database
+        await guildExist.save()
+
+        // Return back updated document.
+        res.json(guildExist);
+        
+        
+    } catch (error) {
+        new APIError(fileName, error, res);
+    }
+});
+
 
 module.exports = {
     name: fileName,
