@@ -107,6 +107,43 @@ router.patch('/certificate/guild', authJWT, async (req, res) => {
     }
 });
 
+router.delete('/certificate/guild', authJWT, async (req, res) => {
+
+    try {
+        let mongoDocID = req.body.id;
+        const clubDiscordID = req.body.discordID;
+        const clubName = req.body.name;
+
+        // If mongoDocID is provided then format it correctly for mongoose.
+        if (mongoDocID) {
+            mongoDocID = convertStringToMongoID(mongoDocID); // It converts a string with following format: string lowercase with space replaces with dash
+        }
+
+        // This search with OR statement will try to find one document that matches the criteria.
+        const mongoOptions = {
+            $or: [
+                { 'id': mongoDocID }, // MongoDB's Document ID field.
+                { 'name': clubName }, // Club's Discord Server ID field.
+                { 'discord.id': clubDiscordID }, // Club name field.
+            ]
+        };
+
+        // Check if guild Exists from provided options.
+        const deleteGuildCert = await mongoCertificate.findOneAndDelete(mongoOptions);
+
+        if (deleteGuildCert) {
+            // If guild was found and deleted successfully.
+            res.status(200).json({ message: 'Guid Certificate deleted successfully'})
+        } else {
+            // If the guild was not found
+            res.status(404).json({ message: 'Guild not found!' })
+        }
+
+    } catch (error) {
+        new APIError(fileName, error, res);
+    }
+});
+
 module.exports = {
     name: fileName,
     enabled: true,
