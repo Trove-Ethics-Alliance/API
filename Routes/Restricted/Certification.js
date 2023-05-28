@@ -90,7 +90,7 @@ router.patch('/certificate/guild', authJWT, async (req, res) => {
 
     try {
         // Find the guild
-        const guildExist = await mongoCertificate.findOne({ name: req.body.name });
+        const guildExist = await mongoCertificate.findOne({ _id: req.body._id });
         if (!guildExist) return res.status(404).json({ message: 'Guild not found in database' });
 
         // Apply the updates from the JSON to the object to the found document
