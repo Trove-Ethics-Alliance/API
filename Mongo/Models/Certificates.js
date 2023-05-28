@@ -2,7 +2,7 @@ const { Schema } = require('mongoose');
 const { certDB } = require('../Connections');
 
 const certificateSchema = new Schema({
-    _id: { type: String, required: true, immutable: true },
+    id: { type: String, required: true },
     name: { type: String, required: true, index: true, unique: true },
     discord: {
         invite: { type: String, default: null }, id: {

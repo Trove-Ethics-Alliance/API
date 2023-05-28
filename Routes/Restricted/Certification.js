@@ -18,16 +18,16 @@ router.post('/certificate', authJWT, async (req, res) => {
         // Check if required name parameter is provided.
         if (!name) return res.status(400).json({ message: 'Required name parameter is missing' });
 
-        // Create a _id field for this certificate.
+        // Create a id field for this certificate.
         const guildMongoID = convertStringToMongoID(name);
 
-        const guildExist = await mongoCertificate.findOne({ _id: guildMongoID });
+        const guildExist = await mongoCertificate.findOne({ id: guildMongoID });
         if (guildExist) return res.status(400).json({ message: 'This club is already certified.' });
 
         // CHANGEME. I NEED TO FIGURE OUT A WAY TO HANDLE DUPLICATE ERROR MESSAGES AND HANDLE SYNTAXERRORS FROM API.
 
         const newCertificate = mongoCertificate({
-            _id: guildMongoID,
+            id: guildMongoID,
             name,
             discord: {
                 invite: discord?.invite,
@@ -59,7 +59,6 @@ router.get('/certificate/guild', authJWT, async (req, res) => {
         let mongoDocID = req.query.id;
         const clubDiscordID = req.query.discord;
         const clubName = req.query.name;
-        console.log(req.query);
 
         // If mongoDocID is provided then format it correctly for mongoose.
         if (mongoDocID) {
@@ -69,37 +68,18 @@ router.get('/certificate/guild', authJWT, async (req, res) => {
         // This search with OR statement will try to find one document that matches the criteria.
         const mongoOptions = {
             $or: [
-                { '_id': mongoDocID }, // MongoDB's Document _ID field.
+                { 'id': mongoDocID }, // MongoDB's Document ID field.
                 { 'name': clubName }, // Club's Discord Server ID field.
                 { 'discord.id': clubDiscordID }, // Club name field.
             ]
         };
 
         // Check if guild Exists from provided options.
-        const guildExist = await mongoCertificate.findOne(mongoOptions);
+        const guildExist = await mongoCertificate.findOne(mongoOptions).select('name discord description joinworld requirements representative');
         if (!guildExist) return res.status(404).json({ message: 'Guild not found in database' });
 
-        // Create a new object for immutable fields
-        const immutableFields = [];
-
-        // Check which field is immutable and push it into immutableFields;
-        for ( const attribute in mongoCertificate.schema.obj ) {
-            const field = mongoCertificate.schema.obj[attribute];
-
-            if (field.immutable) {
-                immutableFields.push(attribute);
-            }
-        }
-
-        // Check which field is immutable using immutableFields and then deleteing them from guildExist.
-        for (const attribute of immutableFields) {
-            if (attribute in guildExist._doc) {
-                delete guildExist._doc[attribute]
-            }
-        }
-
         // Return the results
-        res.json({ certificate: guildExist });
+        res.json(guildExist);
 
     } catch (error) {
         new APIError(fileName, error, res);
@@ -121,7 +101,6 @@ router.patch('/certificate/guild', authJWT, async (req, res) => {
 
         // Return back updated document.
         res.json(guildExist);
-
 
     } catch (error) {
         new APIError(fileName, error, res);
