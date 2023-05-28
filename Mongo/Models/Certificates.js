@@ -2,7 +2,7 @@ const { Schema } = require('mongoose');
 const { certDB } = require('../Connections');
 
 const certificateSchema = new Schema({
-    _id: { type: String, required: true },
+    _id: { type: String, required: true, immutable: true },
     name: { type: String, required: true, index: true, unique: true },
     discord: {
         invite: { type: String, default: null }, id: {
@@ -16,7 +16,7 @@ const certificateSchema = new Schema({
     joinworld: { type: String, default: null },
     requirements: { type: String, default: null },
     representative: { user: { type: String, default: null }, id: { type: String, default: null } },
-    joined: { type: Date, default: Date.now },
+    joined: { type: Date, default: Date.now, immutable: true },
 }, {
     versionKey: false,
     autoCreate: true, // auto create collection

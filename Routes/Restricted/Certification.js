@@ -79,6 +79,25 @@ router.get('/certificate/guild', authJWT, async (req, res) => {
         const guildExist = await mongoCertificate.findOne(mongoOptions);
         if (!guildExist) return res.status(404).json({ message: 'Guild not found in database' });
 
+        // Create a new object for immutable fields
+        const immutableFields = [];
+
+        // Check which field is immutable and push it into immutableFields;
+        for ( const attribute in mongoCertificate.schema.obj ) {
+            const field = mongoCertificate.schema.obj[attribute];
+
+            if (field.immutable) {
+                immutableFields.push(attribute);
+            }
+        }
+
+        // Check which field is immutable using immutableFields and then deleteing them from guildExist.
+        for (const attribute of immutableFields) {
+            if (attribute in guildExist._doc) {
+                delete guildExist._doc[attribute]
+            }
+        }
+
         // Return the results
         res.json({ certificate: guildExist });
 
@@ -91,7 +110,7 @@ router.patch('/certificate/guild', authJWT, async (req, res) => {
 
     try {
         // Find the guild
-        const guildExist = await mongoCertificate.findOne({ 'discord.id': req.body.discord.id });
+        const guildExist = await mongoCertificate.findOne({ name: req.body.name });
         if (!guildExist) return res.status(404).json({ message: 'Guild not found in database' });
 
         // Apply the updates from the JSON to the object to the found document
