@@ -56,6 +56,7 @@ router.post('/certificate', authJWT, async (req, res) => {
 router.get('/certificate/guild', authJWT, async (req, res) => {
 
     try {
+        let mongoDoc_ID = req.query.Mid;
         let mongoDocID = req.query.id;
         const clubDiscordID = req.query.discord;
         const clubName = req.query.name;
@@ -68,6 +69,7 @@ router.get('/certificate/guild', authJWT, async (req, res) => {
         // This search with OR statement will try to find one document that matches the criteria.
         const mongoOptions = {
             $or: [
+                { '_id': mongoDoc_ID}, // MongoDB's Document _id field.
                 { 'id': mongoDocID }, // MongoDB's Document ID field.
                 { 'name': clubName }, // Club's Discord Server ID field.
                 { 'discord.id': clubDiscordID }, // Club name field.
@@ -133,7 +135,7 @@ router.delete('/certificate/guild', authJWT, async (req, res) => {
 
         if (deleteGuildCert) {
             // If guild was found and deleted successfully.
-            res.status(200).json({ message: 'Guid Certificate deleted successfully'})
+            res.status(200).json({ message: 'Guid Certificate deleted successfully' });
         } else {
             // If the guild was not found
             res.status(404).json({ message: 'Guild not found!' })
