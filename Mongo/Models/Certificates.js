@@ -15,7 +15,7 @@ const certificateSchema = new Schema({
     description: { type: String, default: null },
     joinworld: { type: String, default: null },
     requirements: { type: String, default: null },
-    representative: { user: { type: String, default: null }, id: { type: String, default: null } },
+    representatives: { type: [String] },
     joined: { type: Date, default: Date.now, immutable: true },
 }, {
     versionKey: false,
