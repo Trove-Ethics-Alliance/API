@@ -1,12 +1,15 @@
 const mongoose = require('mongoose');
 const log = require('../Addons/Logger');
 
+// Set the mongoose debug while on debug mode.
+if (process.env.API_DEBUG) mongoose.set('debug', true);
+
 const options = {
     heartbeatFrequencyMS: 10000, // Check the connection status every 10 seconds.
     maxPoolSize: 10, // Maintain up to 10 socket connections
-    serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
-    socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-    family: 4 // Use IPv4, skip trying IPv6
+    serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds.
+    socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity.
+    family: 4 // Use IPv4, skip trying IPv6.
 };
 
 // Creacte a new connection to user database.
@@ -22,10 +25,7 @@ mongoose.certDB = mongoose.createConnection(process.env.certURI, options, err =>
 // User database connection listener.
 mongoose.userDB
     .on('error', err => log.info('Error occured with \'user\' database', err))
-    .on('connected', function () {
-        mongoose.set('debug', function (col, method, query, doc) { log.debug(`MongoDB :: '${this.modelName}' :: '${this.name}' :: ${col}.${method}(${JSON.stringify(query)}, ${JSON.stringify(doc)})`); });
-        log.info(`Connected to '${this.name}' database.`);
-    })
+    .on('connected', () => log.info('[MongoDB] Connected to the \'user\' database.'))
     .on('open', () => log.info('[MongoDB] Connection open for \'user\' database.'))
     .on('timeout', () => log.info('[MongoDB] Connection timeout for \'user\' database.'))
     .on('reconnected', () => log.info('[MongoDB] Connection restored for \'user\' database.'))
@@ -36,10 +36,7 @@ mongoose.userDB
 // User database connection listener.
 mongoose.certDB
     .on('error', err => log.info('Error occured with \'certificate\' database', err))
-    .on('connected', function () {
-        mongoose.set('debug', function (col, method, query, doc) { log.debug(`MongoDB :: '${this.modelName}' :: '${this.name}' :: ${col}.${method}(${JSON.stringify(query)}, ${JSON.stringify(doc)})`); });
-        log.info(`Connected to '${this.name}' database.`);
-    })
+    .on('connected', () => log.info('[MongoDB] Connected to the \'certificate\' database.'))
     .on('open', () => log.info('[MongoDB] Connection open for \'certificate\' database.'))
     .on('timeout', () => log.info('[MongoDB] Connection timeout for \'certificate\' database.'))
     .on('reconnected', () => log.info('[MongoDB] Connection restored for \'certificate\' database.'))
