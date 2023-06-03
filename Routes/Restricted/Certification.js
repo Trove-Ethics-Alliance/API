@@ -129,7 +129,7 @@ router.delete('/certificate/guild', authJWT, async (req, res) => {
         const mongoOptions = {
             $or: [
                 { 'id': clubID }, // MongoDB's Document ID field.
-                { 'name': clubName }, // Club name field.
+                { 'name': { $regex: new RegExp('^' + clubName + '$', 'i') } }, // Club's Name field.
                 { 'discord.id': clubDiscordID }, // Club's Discord Server ID field.
             ]
         };
@@ -141,7 +141,7 @@ router.delete('/certificate/guild', authJWT, async (req, res) => {
         if (!deleteGuildCert) return res.status(200).json();
 
         // Response when guild certificate is removed.
-        res.status(200).json({ message: 'Guid Certificate deleted successfully' });
+        res.json({ response: 'Guild Certificate deleted successfully' });
 
     } catch (error) {
         new APIError(fileName, error, res);
