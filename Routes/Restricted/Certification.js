@@ -16,28 +16,21 @@ router.post('/certificate', authJWT, async (req, res) => {
         const { name, discord, description, joinworld, requirements, representatives } = req.body;
 
         // Check if required name parameter is provided.
-        if (!name) return res.status(400).json({ response: 'Required name parameter is missing' });
-
-        // Create a id field for this certificate.
-        const clubID = convertStringToMongoID(name);
+        if (!name) return res.status(400).json({ message: 'Required name parameter is missing' });
 
         // Find a document for this clubID int the certificate database using id field.
-        const guildExist = await mongoCertificate.findOne({ id: clubID });
+        const guildExist = await mongoCertificate.findOne({ name });
 
         // Response when the guild document is found.
-        if (guildExist) return res.status(400).json({ response: 'This club is already certified.' });
+        if (guildExist) return res.status(400).json({ message: 'This club is already certified.' });
 
         const newCertificate = mongoCertificate({
-            id: clubID,
             name,
-            discord: {
-                invite: discord?.invite,
-                id: discord?.id
-            },
+            discord,
             description,
             joinworld,
             requirements,
-            representatives // TODO must be an array.
+            representatives
         });
 
         // Save the new document and send API response.
@@ -45,7 +38,7 @@ router.post('/certificate', authJWT, async (req, res) => {
             .then(doc => {
 
                 // Response when document is saved successfully.
-                res.status(200).json({ response: `A new club '${doc.name}' successfully certified.`, doc });
+                res.status(200).json({ message: `A new club '${doc.name}' successfully certified.`, doc });
             });
     } catch (error) {
         new APIError(fileName, error, res);
@@ -141,7 +134,7 @@ router.delete('/certificate/guild', authJWT, async (req, res) => {
         if (!deleteGuildCert) return res.status(200).json();
 
         // Response when guild certificate is removed.
-        res.json({ response: 'Guild Certificate deleted successfully' });
+        res.json({ message: 'Guild Certificate deleted successfully' });
 
     } catch (error) {
         new APIError(fileName, error, res);
