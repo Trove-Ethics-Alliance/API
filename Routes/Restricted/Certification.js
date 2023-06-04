@@ -4,13 +4,12 @@ const authJWT = require('../../Auth/JWT');
 const path = require('path');
 const { mongoCertificate } = require('../../Mongo/Models/Certificates');
 const APIError = require('../../Addons/Classes');
-const { convertStringToMongoID } = require('../../Addons/Functions');
 
 // Get file name.
 const fileName = path.basename(__filename).slice(0, -3);
 
-// Endpoint to create a new club certificate.
-router.post('/certificate', authJWT, async (req, res) => {
+// Endpoint to create a new certificate document.
+router.post('/certificate/guild', authJWT, async (req, res) => {
     try {
         // Destructuring assignment.
         const { name, discord, description, joinworld, requirements, representatives } = req.body;
@@ -22,7 +21,7 @@ router.post('/certificate', authJWT, async (req, res) => {
         const guildExist = await mongoCertificate.findOne({ name });
 
         // Response when the guild document is found.
-        if (guildExist) return res.status(400).json({ message: 'This club is already certified.' });
+        if (guildExist) return res.status(400).json({ message: `'${guildExist.name}' club is already certified.` });
 
         const newCertificate = mongoCertificate({
             name,
@@ -45,27 +44,20 @@ router.post('/certificate', authJWT, async (req, res) => {
     }
 });
 
-// Endpoint to get certificate data from a guild
+// Endpoint to find certificate document.
 router.get('/certificate/guild', authJWT, async (req, res) => {
 
     try {
-        const mongoDocID = req.query.mid;
-        let clubID = req.query.id;
+        const documentID = req.query.id;
         const clubDiscordID = req.query.discord;
         const clubName = req.query.name;
-
-        // If mongoDocID is provided then format it correctly for mongoose.
-        if (clubID) {
-            clubID = convertStringToMongoID(clubID); // It converts a string with following format: string lowercase with space replaces with dash
-        }
 
         // This search with OR statement will try to find one document that matches the criteria.
         const mongoOptions = {
             $or: [
-                { '_id': mongoDocID }, // MongoDB's Document _id field.
-                { 'id': clubID }, // Club's ID field.
-                { 'name': { $regex: new RegExp('^' + clubName + '$', 'i') } }, // Club's Name field.
-                { 'discord.id': clubDiscordID }, // Club's Discord Server ID field.
+                { _id: documentID }, // MongoDB's Document _id field.
+                { name: { $regex: clubName, $options: 'i' } }, // Club's Name field.
+                { discord: clubDiscordID }, // Club's Discord Server ID field.
             ]
         };
 
@@ -76,13 +68,14 @@ router.get('/certificate/guild', authJWT, async (req, res) => {
         if (!guildExist) return res.status(200).json();
 
         // Return the results
-        res.json(guildExist);
+        res.status(200).json(guildExist);
 
     } catch (error) {
         new APIError(fileName, error, res);
     }
 });
 
+// Endpoint to update certificate document..
 router.patch('/certificate/guild', authJWT, async (req, res) => {
 
     try {
@@ -108,24 +101,18 @@ router.patch('/certificate/guild', authJWT, async (req, res) => {
     }
 });
 
+// Endpoint to delete a certificate document.
 router.delete('/certificate/guild', authJWT, async (req, res) => {
 
     try {
-        let clubID = req.body.id;
-        const clubDiscordID = req.body.discordID;
+        const clubDiscordID = req.body.discord;
         const clubName = req.body.name;
-
-        // If mongoDocID is provided then format it correctly for mongoose.
-        if (clubID) {
-            clubID = convertStringToMongoID(clubID); // It converts a string with following format: string lowercase with space replaces with dash
-        }
 
         // This search with OR statement will try to find one document that matches the criteria.
         const mongoOptions = {
             $or: [
-                { 'id': clubID }, // MongoDB's Document ID field.
-                { 'name': { $regex: new RegExp('^' + clubName + '$', 'i') } }, // Club's Name field.
-                { 'discord.id': clubDiscordID }, // Club's Discord Server ID field.
+                { name: { $regex: clubName, $options: 'i' } }, // Club's Name field.
+                { discord: clubDiscordID }, // Club's Discord Server ID field.
             ]
         };
 
@@ -136,7 +123,7 @@ router.delete('/certificate/guild', authJWT, async (req, res) => {
         if (!deleteGuildCert) return res.status(200).json();
 
         // Response when guild certificate is removed.
-        res.json({ message: 'Guild Certificate deleted successfully' });
+        res.status(200).json({ message: `Guild Certificate for '${deleteGuildCert.name}' deleted successfully` });
 
     } catch (error) {
         new APIError(fileName, error, res);
