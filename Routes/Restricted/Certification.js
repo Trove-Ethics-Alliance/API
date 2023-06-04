@@ -96,10 +96,12 @@ router.patch('/certificate/guild', authJWT, async (req, res) => {
         Object.assign(guildExist, req.body);
 
         // Save the modified document back to the database.
-        await guildExist.save();
+        await guildExist.save()
+            .then(doc => {
 
-        // Response back with updated document.
-        res.json(guildExist);
+                // Response when document is saved successfully.
+                res.status(200).json({ message: `Successfully modified ${doc.name}'s Club Certificate.`, doc });
+            });
 
     } catch (error) {
         new APIError(fileName, error, res);
