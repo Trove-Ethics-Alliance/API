@@ -89,7 +89,7 @@ router.patch('/certificate/guild', authJWT, async (req, res) => {
 
     try {
         // Find the guild in the certificate database by _id field.
-        const guildExist = await mongoCertificate.findOne({ _id: req.body._id });
+        const guildExist = await mongoCertificate.findOne({ _id: req.body.id });
 
         // Empty reponse with status 200 when 'guildExist' is not found.
         if (!guildExist) return res.status(200).json();
@@ -114,29 +114,17 @@ router.patch('/certificate/guild', authJWT, async (req, res) => {
 router.delete('/certificate/guild', authJWT, async (req, res) => {
 
     try {
-        const documentID = req.query.id;
-        const clubName = req.query.name;
-        const clubDiscordID = req.query.discord;
+        console.log(req.body);
+        const documentID = req.body.id;
 
         // Check if at least query parameter is present.
-        if (!documentID && !clubDiscordID && !clubName) return res.status(400).json({ message: 'Missing query parameters' });
+        if (!documentID) return res.status(400).json({ message: 'Missing query parameters' });
 
         // Check if the ID query parameter is a valid MongoDB _ID object.
         if (documentID && !mongoose.Types.ObjectId.isValid(documentID)) return res.status(400).json({ message: 'Document ID is not valid.' });
 
-        // This search with OR statement will try to find one document that matches the criteria.
-        const mongoOptions = {
-            $or: [
-            ]
-        };
-
-        // Fill mongoOptions OR array with available options.
-        if (documentID) mongoOptions.$or.push({ _id: documentID });
-        if (clubName) mongoOptions.$or.push({ name: { $regex: clubName, $options: 'i' } });
-        if (clubDiscordID) mongoOptions.$or.push({ discord: clubDiscordID });
-
         // Check if guild exists from provided options.
-        const deleteGuildCert = await mongoCertificate.findOneAndDelete(mongoOptions);
+        const deleteGuildCert = await mongoCertificate.findOneAndDelete({ _id: documentID });
 
         // Empty reponse with status 200 when 'deleteGuildCert' is not found.
         if (!deleteGuildCert) return res.status(200).json();
