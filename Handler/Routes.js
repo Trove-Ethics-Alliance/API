@@ -12,8 +12,8 @@ async function loadAPIRoutes(app) {
         const table = new AsciiTable('API Routes v1');
         table.setHeading('Status', 'Path Name', 'File');
 
-        // Set Route Number.
-        let routeNumber = 0;
+        // Set this variable to false by default.
+        let routeBoolean = false;
 
         try {
             // Load API Routes files.
@@ -30,11 +30,13 @@ async function loadAPIRoutes(app) {
 
                     let routePath;
                     for (let index = 0; index < apiRoute.router.stack.length; index++) {
-                        if (routePath === undefined) {
-                            routePath = `[${apiRoute.router.stack[index].route.path}]`;
-                        } else {
-                            routePath = `${routePath}[${apiRoute.router.stack[index].route.path}]`;
-                        }
+
+                        // Get the route methods toUpperCase string.
+                        const methodObject = apiRoute.router.stack[index].route.methods;
+                        const METHOD = Object.keys(methodObject)[0]?.toUpperCase();
+
+                        // Make a routePath string with formatted paths and methods.
+                        routePath = routePath ? `${routePath} [${METHOD}:${apiRoute.router.stack[index].route.path}]` : `[${METHOD}:${apiRoute.router.stack[index].route.path}]`;
                     }
 
                     // Add table row for this API Route.
@@ -50,8 +52,8 @@ async function loadAPIRoutes(app) {
                     // Load Enabled Routes.
                     app.use('/v1', apiRoute.router);
 
-                    // Add one Route Number.
-                    routeNumber = routeNumber + 1;
+                    // Indicate whether at least one route is enabled.
+                    routeBoolean = true;
 
                 } catch (error) {
                     reject(`Error loading API Route files ${error.message}`);
@@ -59,7 +61,7 @@ async function loadAPIRoutes(app) {
             }
 
             // Send a log command when there are no Routes loaded.
-            if (routeNumber === 0) {
+            if (!routeBoolean) {
                 resolve('[LOAD ROUTES] ❌ No enabled API Routes were found.');
             } else {
                 resolve(table.toString());

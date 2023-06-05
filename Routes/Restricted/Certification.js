@@ -4,11 +4,12 @@ const authJWT = require('../../Auth/JWT');
 const path = require('path');
 const { mongoCertificate } = require('../../Mongo/Models/Certificates');
 const APIError = require('../../Addons/Classes');
+const mongoose = require('mongoose');
 
 // Get file name.
 const fileName = path.basename(__filename).slice(0, -3);
 
-// Endpoint to create a new certificate document.
+// Create a new certificate document.
 router.post('/certificate/guild', authJWT, async (req, res) => {
     try {
         // Destructuring assignment.
@@ -44,30 +45,38 @@ router.post('/certificate/guild', authJWT, async (req, res) => {
     }
 });
 
-// Endpoint to find certificate document.
+// Find certificate document.
 router.get('/certificate/guild', authJWT, async (req, res) => {
 
     try {
         const documentID = req.query.id;
-        const clubDiscordID = req.query.discord;
         const clubName = req.query.name;
+        const clubDiscordID = req.query.discord;
+
+        // Check if at least query parameter is present.
+        if (!documentID && !clubDiscordID && !clubName) return res.status(400).json({ message: 'Missing query parameters' });
+
+        // Check if the ID query parameter is a valid MongoDB _ID object.
+        if (documentID && !mongoose.Types.ObjectId.isValid(documentID)) return res.status(400).json({ message: 'Document ID is not valid.' });
 
         // This search with OR statement will try to find one document that matches the criteria.
         const mongoOptions = {
             $or: [
-                { _id: documentID }, // MongoDB's Document _id field.
-                { name: { $regex: clubName, $options: 'i' } }, // Club's Name field.
-                { discord: clubDiscordID }, // Club's Discord Server ID field.
             ]
         };
+
+        // Fill mongoOptions OR array with available options.
+        if (documentID) mongoOptions.$or.push({ _id: documentID });
+        if (clubName) mongoOptions.$or.push({ name: { $regex: clubName, $options: 'i' } });
+        if (clubDiscordID) mongoOptions.$or.push({ discord: clubDiscordID });
 
         // Check if guild Exists from provided options.
         const guildExist = await mongoCertificate.findOne(mongoOptions).select('name discord description joinworld requirements representatives');
 
-        // Send empty response if guild doesn't exist
+         // Empty reponse with status 200 when 'guildExist' is not found.
         if (!guildExist) return res.status(200).json();
 
-        // Return the results
+        // Reponse with status 200 with the document object for the guild.
         res.status(200).json(guildExist);
 
     } catch (error) {
@@ -75,14 +84,14 @@ router.get('/certificate/guild', authJWT, async (req, res) => {
     }
 });
 
-// Endpoint to update certificate document..
+// Update certificate document.
 router.patch('/certificate/guild', authJWT, async (req, res) => {
 
     try {
         // Find the guild in the certificate database by _id field.
         const guildExist = await mongoCertificate.findOne({ _id: req.body._id });
 
-        // Response when 'guildExist' is not found.
+        // Empty reponse with status 200 when 'guildExist' is not found.
         if (!guildExist) return res.status(200).json();
 
         // Apply the updates received from the req.body to the 'guildExist' object.
@@ -92,7 +101,7 @@ router.patch('/certificate/guild', authJWT, async (req, res) => {
         await guildExist.save()
             .then(doc => {
 
-                // Response when document is saved successfully.
+                // Reponse with status 200 with the document object for the guild that has been updated.
                 res.status(200).json({ message: `Successfully modified ${doc.name}'s Club Certificate.`, doc });
             });
 
@@ -101,25 +110,35 @@ router.patch('/certificate/guild', authJWT, async (req, res) => {
     }
 });
 
-// Endpoint to delete a certificate document.
+// Delete a certificate document.
 router.delete('/certificate/guild', authJWT, async (req, res) => {
 
     try {
-        const clubDiscordID = req.body.discord;
-        const clubName = req.body.name;
+        const documentID = req.query.id;
+        const clubName = req.query.name;
+        const clubDiscordID = req.query.discord;
+
+        // Check if at least query parameter is present.
+        if (!documentID && !clubDiscordID && !clubName) return res.status(400).json({ message: 'Missing query parameters' });
+
+        // Check if the ID query parameter is a valid MongoDB _ID object.
+        if (documentID && !mongoose.Types.ObjectId.isValid(documentID)) return res.status(400).json({ message: 'Document ID is not valid.' });
 
         // This search with OR statement will try to find one document that matches the criteria.
         const mongoOptions = {
             $or: [
-                { name: { $regex: clubName, $options: 'i' } }, // Club's Name field.
-                { discord: clubDiscordID }, // Club's Discord Server ID field.
             ]
         };
 
-        // Check if guild Exists from provided options.
+        // Fill mongoOptions OR array with available options.
+        if (documentID) mongoOptions.$or.push({ _id: documentID });
+        if (clubName) mongoOptions.$or.push({ name: { $regex: clubName, $options: 'i' } });
+        if (clubDiscordID) mongoOptions.$or.push({ discord: clubDiscordID });
+
+        // Check if guild exists from provided options.
         const deleteGuildCert = await mongoCertificate.findOneAndDelete(mongoOptions);
 
-        // Response when 'deleteGuildCert' is not found.
+        // Empty reponse with status 200 when 'deleteGuildCert' is not found.
         if (!deleteGuildCert) return res.status(200).json();
 
         // Response when guild certificate is removed.
