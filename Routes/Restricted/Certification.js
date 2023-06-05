@@ -18,12 +18,6 @@ router.post('/certificate/guild', authJWT, async (req, res) => {
         // Check if required name parameter is provided.
         if (!name) return res.status(400).json({ message: 'Required name parameter is missing' });
 
-        // Find a document for this clubID int the certificate database using id field.
-        const guildExist = await mongoCertificate.findOne({ name });
-
-        // Response when the guild document is found.
-        if (guildExist) return res.status(400).json({ message: `'${guildExist.name}' club is already certified.` });
-
         const newCertificate = mongoCertificate({
             name,
             discord,
@@ -73,7 +67,7 @@ router.get('/certificate/guild', authJWT, async (req, res) => {
         // Check if guild Exists from provided options.
         const guildExist = await mongoCertificate.findOne(mongoOptions).select('name discord description joinworld requirements representatives');
 
-         // Empty reponse with status 200 when 'guildExist' is not found.
+        // Empty reponse with status 200 when 'guildExist' is not found.
         if (!guildExist) return res.status(200).json();
 
         // Reponse with status 200 with the document object for the guild.
@@ -114,7 +108,6 @@ router.patch('/certificate/guild', authJWT, async (req, res) => {
 router.delete('/certificate/guild', authJWT, async (req, res) => {
 
     try {
-        console.log(req.body);
         const documentID = req.body.id;
 
         // Check if at least query parameter is present.
