@@ -3,15 +3,15 @@ const { certDB } = require('../Connections');
 
 const certificateSchema = new Schema({
     name: {
-        type: String, required: true, index: { // Make this case insensitive.
-            collation: { locale: 'en', strength: 2 },
-            unique: true
+        type: String, required: true, index: {
+            collation: { locale: 'en', strength: 2 }, // Make this case insensitive.
+            unique: true // Make this unique
         },
     },
     discord: {
         type: String, default: null, index: {
-            unique: true,
-            partialFilterExpression: { 'discord': { $type: 'string' } } // Make unique discord id if that field is provided.
+            partialFilterExpression: { 'discord': { $type: 'string' } }, // Make unique only if that field is provided.
+            unique: true // Make this unique
         }
     },
     description: { type: String, default: null },
@@ -26,7 +26,5 @@ const certificateSchema = new Schema({
     collection: 'data'
 });
 
-// define indexes to create
-// certificateSchema.index({ club: 1 }, { unique: true, name: 'club_unique' });
 
 module.exports.mongoCertificate = certDB.model('certificate', certificateSchema); // Export Mongo model.

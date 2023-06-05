@@ -32,7 +32,7 @@ router.post('/certificate/guild', authJWT, async (req, res) => {
             .then(doc => {
 
                 // Response when document is saved successfully.
-                res.status(200).json({ message: `A new club '${doc.name}' successfully certified.`, doc });
+                res.status(200).json({ message: `Certificate for '${doc.name}' created successfully.`, doc });
             });
     } catch (error) {
         new APIError(fileName, error, res);
@@ -96,7 +96,7 @@ router.patch('/certificate/guild', authJWT, async (req, res) => {
             .then(doc => {
 
                 // Reponse with status 200 with the document object for the guild that has been updated.
-                res.status(200).json({ message: `Successfully modified ${doc.name}'s Club Certificate.`, doc });
+                res.status(200).json({ message: `Certificate for '${doc.name}' updated successfully.`, doc });
             });
 
     } catch (error) {
@@ -123,7 +123,7 @@ router.delete('/certificate/guild', authJWT, async (req, res) => {
         if (!deleteGuildCert) return res.status(200).json();
 
         // Response when guild certificate is removed.
-        res.status(200).json({ message: `Guild Certificate for '${deleteGuildCert.name}' deleted successfully` });
+        res.status(200).json({ message: `Certificate for '${deleteGuildCert.name}' deleted successfully.`, doc: deleteGuildCert });
 
     } catch (error) {
         new APIError(fileName, error, res);
