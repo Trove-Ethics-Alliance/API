@@ -65,7 +65,7 @@ router.get('/certificate/guild', authJWT, async (req, res) => {
         if (clubDiscordID) mongoOptions.$or.push({ discord: clubDiscordID });
 
         // Check if guild Exists from provided options.
-        const guildExist = await mongoCertificate.findOne(mongoOptions).select('name discord description joinworld requirements representatives');
+        const guildExist = await mongoCertificate.findOne(mongoOptions);
 
         // Empty reponse with status 200 when 'guildExist' is not found.
         if (!guildExist) return res.status(200).json();
