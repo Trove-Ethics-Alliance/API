@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const log = require('../Addons/Logger');
 
 // Set the mongoose debug while on debug mode.
-if (process.env.API_DEBUG) mongoose.set('debug', true);
+if (process.env.API_DEBUG === 'true') mongoose.set('debug', true);
 
 const options = {
     heartbeatFrequencyMS: 10000, // Check the connection status every 10 seconds.
