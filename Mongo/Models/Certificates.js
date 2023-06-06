@@ -23,8 +23,8 @@ const certificateSchema = new Schema({
     versionKey: false,
     autoCreate: true, // auto create collection
     autoIndex: true, // auto create indexes
-    collection: 'data'
+    collection: 'certificates.data'
 });
 
 
-module.exports.mongoCertificate = certDB.model('certificates', certificateSchema); // Export Mongo model.
+module.exports.mongoCertificate = certDB.model('certificate', certificateSchema); // Export Mongo model.
