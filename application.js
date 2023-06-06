@@ -1,7 +1,9 @@
 require('dotenv').config();
 const express = require('express');
+const favicon = require('serve-favicon');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
+const path = require('path');
 const log = require('./Addons/Logger');
 const loadAPIRoutes = require('./Handler/Routes');
 
@@ -13,6 +15,9 @@ async function start() {
         // Middlewares
         app.use(bodyParser.urlencoded({ extended: true }));
         app.use(bodyParser.json());
+
+        // Load favicon
+        app.use(favicon(path.join(__dirname, 'HTML', 'images', 'favicon.ico')));
 
         // Load application process configuration
         require('./Addons/Process')(app);
