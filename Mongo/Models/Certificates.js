@@ -1,16 +1,24 @@
 const { Schema } = require('mongoose');
-const { certDB } = require('../Mongo/Connections');
+const { certDB } = require('../Connections');
 
 const certificateSchema = new Schema({
-    club: { type: String, required: true, index: true, unique: true, dropDups: true, },
-    description: { type: String, default: null },
-    world: { type: String, default: null },
-    requirements: { type: String, default: null },
-    representative: { type: String, default: null },
+    name: {
+        type: String, required: true, index: {
+            collation: { locale: 'en', strength: 2 }, // Make this case insensitive.
+            unique: true // Make this unique
+        },
+    },
     discord: {
-        invite: { type: String, default: null },
-        id: { type: String, default: null },
-    }
+        type: String, default: null, index: {
+            partialFilterExpression: { 'discord': { $type: 'string' } }, // Make unique only if that field is provided.
+            unique: true // Make this unique
+        }
+    },
+    description: { type: String, default: null },
+    joinworld: { type: String, default: null },
+    requirements: { type: String, default: null },
+    representatives: { type: String },
+    joined: { type: Date, default: Date.now, immutable: true },
 }, {
     versionKey: false,
     autoCreate: true, // auto create collection
@@ -18,7 +26,5 @@ const certificateSchema = new Schema({
     collection: 'data'
 });
 
-// define indexes to create
-// certificateSchema.index({ club: 1 }, { unique: true, name: 'club_unique' });
 
 module.exports.mongoCertificate = certDB.model('certificate', certificateSchema); // Export Mongo model.
