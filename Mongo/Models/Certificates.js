@@ -27,4 +27,4 @@ const certificateSchema = new Schema({
 });
 
 
-module.exports.mongoCertificate = certDB.model('certificate', certificateSchema); // Export Mongo model.
+module.exports.mongoCertificate = certDB.model('certificates', certificateSchema); // Export Mongo model.
