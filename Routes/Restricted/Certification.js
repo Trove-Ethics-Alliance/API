@@ -46,6 +46,10 @@ router.get('/certificate/guild', authJWT, async (req, res) => {
         const documentID = req.query.id;
         const clubName = req.query.name;
         const clubDiscordID = req.query.discord;
+        const listRequest = req.query.list;
+
+        // Check if its a list request.
+        if (listRequest) return res.json(await mongoCertificate.find({}));
 
         // Check if at least query parameter is present.
         if (!documentID && !clubDiscordID && !clubName) return res.status(400).json({ message: 'Missing query parameters' });
