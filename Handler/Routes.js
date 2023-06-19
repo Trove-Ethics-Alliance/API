@@ -28,6 +28,9 @@ async function loadAPIRoutes(app) {
                     // Assign variable to the API Route file.
                     const apiRoute = require(route_dir_root);
 
+                    // Check if apiRoute has router.
+                    if (!apiRoute.router) continue;
+
                     // String with the API Route, method and file name.
                     let routePath;
 
