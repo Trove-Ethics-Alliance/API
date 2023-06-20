@@ -2,13 +2,11 @@ require('dotenv').config();
 const express = require('express');
 const favicon = require('serve-favicon');
 const bodyParser = require('body-parser');
+const app = express();
 const mongoose = require('mongoose');
 const path = require('path');
 const log = require('./Addons/Logger');
 const loadAPIRoutes = require('./Handler/Routes');
-
-const app = express();
-const port = process.env.PORT;
 
 async function start() {
     try {
@@ -16,15 +14,17 @@ async function start() {
         app.use(bodyParser.urlencoded({ extended: true }));
         app.use(bodyParser.json());
 
-        // Load favicon
-        app.use(favicon(path.join(__dirname, 'HTML', 'images', 'favicon.ico')));
+        // Load middlewares
+        app.use(require('./Addons/ExpressLogs'));
+        app.use(require('./Addons/ExpressErrors'));
 
         // Load application process configuration
         require('./Addons/Process')(app);
 
-        // Load middlewares
-        app.use(require('./Addons/ExpressLogs'));
+        // Load favicon
+        app.use(favicon(path.join(__dirname, 'HTML', 'images', 'favicon.ico')));
 
+        // Load api routes.
         const [APIRouteTable] = await Promise.all([
             loadAPIRoutes(app),
         ]);
@@ -50,7 +50,7 @@ async function start() {
                 log.info('[MongoDB] Connection list:', mongoose.connections.slice(1).map(c => `${c.name ? c.name : 'Unknown'} (${c.readyState})`).join(' :: '));
 
                 // Start the server.
-                app.listen(port, () => {
+                app.listen(process.env.PORT, () => {
                     log.info('⭐ Application Programming Interface is now listening for incoming requests.');
                 });
 

@@ -13,6 +13,7 @@ router.post('/event/scramble/code', authJWT, async (req, res) => {
     try {
         // Destructuring assignment.
         const codeID = req.query.id;
+        const { difficulty, tip, enabled } = req.body;
 
         // Check if at least query parameter is present.
         if (!codeID) return res.status(400).json({ message: 'Missing query parameter' });
@@ -22,7 +23,10 @@ router.post('/event/scramble/code', authJWT, async (req, res) => {
 
         // Make a new document for the scramble event code.
         const newCode = mongoScrambleCode({
-            code: codeID
+            id: codeID,
+            difficulty: difficulty,
+            tip: tip ? tip : null,
+            enabled: enabled !== undefined ? enabled : true
         });
 
         // Save the new document.
@@ -30,7 +34,7 @@ router.post('/event/scramble/code', authJWT, async (req, res) => {
             .then(doc => {
 
                 // Response when document is saved successfully.
-                res.status(200).json({ message: `Scramble event code '${doc.code}' created successfully.`, doc });
+                res.status(200).json({ message: `Scramble event code '${doc.id}' created successfully.`, doc });
             });
 
     } catch (error) {
@@ -44,8 +48,8 @@ router.get('/event/scramble/code', authJWT, async (req, res) => {
 
         // Run a query to get the document. If query ID is provided it will return one speficied document otherwise all of them.
         let codeDocument;
-        if (req.query.id) { codeDocument = await mongoScrambleCode.findOne({ code: req.query.id }); }
-        else { codeDocument = await mongoScrambleCode.find({}).select('code enabled'); }
+        if (req.query.id) { codeDocument = await mongoScrambleCode.findOne({ id: req.query.id }); }
+        else { codeDocument = await mongoScrambleCode.find({}).select('id'); }
 
         // Empty reponse with status 200 when 'codeDocument' is not found.
         if (!codeDocument) return res.status(200).json();
@@ -61,13 +65,11 @@ router.get('/event/scramble/code', authJWT, async (req, res) => {
 // Update a code document.
 router.patch('/event/scramble/code', authJWT, async (req, res) => {
     try {
-        const codeID = req.query.id;
-
         // Check if at least query parameter is present.
-        if (!codeID) return res.status(400).json({ message: 'Missing query parameter' });
+        if (!req.query.id) return res.status(400).json({ message: 'Missing query parameter' });
 
         // Find the document in the database by 'code' field.
-        const codeDocument = await mongoScrambleCode.findOne({ code: codeID });
+        const codeDocument = await mongoScrambleCode.findOne({ id: req.query.id });
 
         // Empty reponse with status 200 when 'codeDocument' is not found.
         if (!codeDocument) return res.status(200).json();
@@ -80,7 +82,7 @@ router.patch('/event/scramble/code', authJWT, async (req, res) => {
             .then(doc => {
 
                 // Reponse with status 200 with the document object for the code that has been updated.
-                res.status(200).json({ message: `Scramble event code '${doc.code}' updated successfully.`, doc });
+                res.status(200).json({ message: `Scramble event code '${doc.id}' updated successfully.`, doc });
             });
 
     } catch (error) {
@@ -91,19 +93,17 @@ router.patch('/event/scramble/code', authJWT, async (req, res) => {
 // Delete a sign document.
 router.delete('/event/scramble/code', authJWT, async (req, res) => {
     try {
-        const codeID = req.query.id;
-
         // Check if at least query parameter is present.
-        if (!codeID) return res.status(400).json({ message: 'Missing query parameter' });
+        if (!req.query.id) return res.status(400).json({ message: 'Missing query parameter' });
 
         // Find the document in the database by 'code' field.
-        const codeDocument = await mongoScrambleCode.findOneAndDelete({ code: codeID });
+        const codeDocument = await mongoScrambleCode.findOneAndDelete({ id: req.query.id });
 
         // Empty reponse with status 200 when 'codeDocument' is not found.
         if (!codeDocument) return res.status(200).json();
 
         // Reponse with status 200 with the document object for the code.
-        res.status(200).json({ message: `Scramble event code '${codeDocument.code}' deleted successfully.`, doc: codeDocument });
+        res.status(200).json({ message: `Scramble event code '${codeDocument.id}' deleted successfully.`, doc: codeDocument });
 
     } catch (error) {
         new APIError(fileName, error, res);
