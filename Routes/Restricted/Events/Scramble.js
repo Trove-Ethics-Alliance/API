@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const authJWT = require('../../Auth/JWT');
+const authJWT = require('../../../Auth/JWT');
 const path = require('path');
-const APIError = require('../../Addons/Classes');
-const { mongoScrambleCode } = require('../../Mongo/Models/Event/Scramble/Codes');
+const APIError = require('../../../Addons/Classes');
+const { mongoScrambleCode } = require('../../../Mongo/Models/Event/Scramble/Code');
+const { eventParticipant } = require('../../../Mongo/Models/Event/Scramble/Participants');
 
 // Get file name.
 const fileName = path.basename(__filename).slice(0, -3);
@@ -104,6 +105,59 @@ router.delete('/event/scramble/code', authJWT, async (req, res) => {
 
         // Reponse with status 200 with the document object for the code.
         res.status(200).json({ message: `Scramble event code '${codeDocument.id}' deleted successfully.`, doc: codeDocument });
+
+    } catch (error) {
+        new APIError(fileName, error, res);
+    }
+});
+
+// Read total points.
+router.get('/event/scramble/total', authJWT, async (req, res) => {
+    try {
+
+        // Run a aggregate to conbine all points from the codes in a specific range.
+        const codeDocument = await mongoScrambleCode.aggregate([
+            { $match: { enabled: true } }, // Combine points only from enabled codes.
+            { $group: { _id: null, total: { $sum: '$difficulty' } } } // Sum points in that group.
+        ]);
+
+        // Reponse with status 200 with the a number of total points available during this event.
+        res.status(200).json(codeDocument[0].total);
+
+    } catch (error) {
+        new APIError(fileName, error, res);
+    }
+});
+
+// Claim the code
+router.get('/event/scramble/code/claim', authJWT, async (req, res) => {
+    try {
+        // Destructuring assignment.
+        const { id, user } = req.query;
+
+        // Run a query to get the document.
+        const codeDocument = await mongoScrambleCode.findOne({ id });
+
+        // Empty reponse with status 200 when 'codeDocument' is not found.
+        if (!codeDocument) return res.status(400).json({ message: 'There is no code with that name.' });
+
+
+        // Define the conditions to find the participant document
+        const conditions = { id: user, codes: { $ne: codeDocument.id } };
+
+        // Define the update or new document to be created
+        const update = { $inc: { points: codeDocument.difficulty }, $addToSet: { codes: codeDocument.id } };
+
+        // Set the options for findOneAndUpdate
+        const options = {
+            upsert: true, // Create a new document if not found
+            new: true, // Return the updated document
+        };
+
+        const newRecord = await eventParticipant.findOneAndUpdate(conditions, update, options);
+
+        // Reponse with status 200 with the document object for the code.
+        res.status(200).json({ participant: newRecord, code: codeDocument });
 
     } catch (error) {
         new APIError(fileName, error, res);
