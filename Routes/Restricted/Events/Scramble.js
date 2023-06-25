@@ -136,10 +136,10 @@ router.get('/event/scramble/code/claim', authJWT, async (req, res) => {
         const { id, user } = req.query;
 
         // Run a query to get the document.
-        const codeDocument = await mongoScrambleCode.findOne({ id });
+        const codeDocument = await mongoScrambleCode.findOne({ id, enabled: true });
 
         // Empty reponse with status 200 when 'codeDocument' is not found.
-        if (!codeDocument) return res.status(400).json({ message: 'There is no code with that name.' });
+        if (!codeDocument) return res.status(400).json({ message: 'There is no active code with that name.' });
 
 
         // Define the conditions to find the participant document
@@ -154,10 +154,21 @@ router.get('/event/scramble/code/claim', authJWT, async (req, res) => {
             new: true, // Return the updated document
         };
 
-        const newRecord = await eventParticipant.findOneAndUpdate(conditions, update, options);
+        const newRecord = await eventParticipant.findOneAndUpdate(conditions, update, options).catch(err => {
 
-        // Reponse with status 200 with the document object for the code.
-        res.status(200).json({ participant: newRecord, code: codeDocument });
+            // Response when code is already claimed.
+            if (err.code === 11000) {
+                return res.status(400).json({ message: 'You already claimed this code!' });
+            }
+
+            // If something else happened just move error to the APIError class default responses.
+            new APIError(fileName, err, res);
+        });
+
+        // Reponse with status 200 with the participant and code document object.
+        if (!res.headersSent) {
+            res.status(200).json({ participant: newRecord, code: codeDocument });
+        }
 
     } catch (error) {
         new APIError(fileName, error, res);

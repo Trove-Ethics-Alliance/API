@@ -42,7 +42,7 @@ class APIError {
 
         // Default handler for unknown error messages.
         log.bug(`API Class Error executed in ${this.fileName}`, error);
-        res.status(500).json({ message: 'Internal Server Error, try again later.' });
+        res.status(500).json({ error: 'Internal Server Error, try again later.' });
     }
 }
 
