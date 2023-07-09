@@ -161,12 +161,53 @@ router.get('/event/scramble/code/claim', authJWT, async (req, res) => {
                 return res.status(400).json({ message: 'You already claimed this code!' });
             }
 
+
             // If something else happened just move error to the APIError class default responses.
             new APIError(fileName, err, res);
         });
 
         // Reponse with status 200 with the participant and code document object.
         if (!res.headersSent) {
+
+
+            // Run a aggregate to conbine all points from the codes in a specific range.
+            const totalPoints = await mongoScrambleCode.aggregate([
+                { $match: { enabled: true } }, // Combine points only from enabled codes.
+                { $group: { _id: null, total: { $sum: '$difficulty' } } } // Sum points in that group.
+            ]);
+
+            // Check if points are received. CHANGEME
+            if (!totalPoints[0]) return res.status(400).json({ message: 'There was an error processing the request.' });
+
+            // Calculate the rank.
+            const percentage = ((newRecord.points / totalPoints[0].total) * 100).toFixed(1); // Calculate the percentage
+
+            // Assign the rank to the document.
+            switch (true) {
+                case (percentage == 100):
+                    newRecord.rank = 'Challenger';
+                    break;
+                case (percentage >= 80 && percentage < 100):
+                    newRecord.rank = 'Diamond';
+                    break;
+                case (percentage >= 60 && percentage < 80):
+                    newRecord.rank = 'Platinium';
+                    break;
+                case (percentage >= 40 && percentage < 60):
+                    newRecord.rank = 'Gold';
+                    break;
+                case (percentage >= 20 && percentage < 40):
+                    newRecord.rank = 'Silver';
+                    break;
+                default:
+                    newRecord.rank = 'Unranked';
+                    break;
+            }
+
+            // Save the document.
+            newRecord.save();
+
+            // Send response.
             res.status(200).json({ participant: newRecord, code: codeDocument });
         }
 

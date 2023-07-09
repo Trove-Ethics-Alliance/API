@@ -5,13 +5,12 @@ const codeSchema = new Schema({
     id: {
         type: String,
         required: true,
-        match: /^\d{18}$/,
         index: {
             unique: true
         },
     },
     points: { type: Number, required: true, min: 0, max: 9999 },
-    rank: { type: String, required: true, maxlength: 64, default: 'unranked' },
+    rank: { type: String, required: true, maxlength: 64, default: 'Unranked' },
     codes: { type: [String], required: true, default: [] },
 }, {
     versionKey: false,
