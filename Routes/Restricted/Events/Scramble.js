@@ -6,6 +6,11 @@ const APIError = require('../../../Addons/Classes');
 const { mongoScrambleCode } = require('../../../Mongo/Models/Event/Scramble/Code');
 const { eventParticipant } = require('../../../Mongo/Models/Event/Scramble/Participants');
 
+// Scramble event rank names.
+const scrambleRanks = [
+    'Unranked', 'Silver', 'Gold', 'Platinium', 'Diamond', 'Obsidian'
+];
+
 // Get file name.
 const fileName = path.basename(__filename).slice(0, -3);
 
@@ -34,7 +39,7 @@ router.post('/event/scramble/code', authJWT, async (req, res) => {
         await newCode.save()
             .then(doc => {
 
-                // Response when document is saved successfully.
+                // Send response to the requester.
                 res.status(200).json({ message: `Scramble event code '${doc.id}' created successfully.`, doc });
             });
 
@@ -141,14 +146,13 @@ router.get('/event/scramble/code/claim', authJWT, async (req, res) => {
         // Empty reponse with status 200 when 'codeDocument' is not found.
         if (!codeDocument) return res.status(400).json({ message: 'There is no active code with that name.' });
 
-
-        // Define the conditions to find the participant document
+        // Define conditions to find the participant document
         const conditions = { id: user, codes: { $ne: codeDocument.id } };
 
-        // Define the update or new document to be created
+        // Define the update data for the participant document.
         const update = { $inc: { points: codeDocument.difficulty }, $addToSet: { codes: codeDocument.id } };
 
-        // Set the options for findOneAndUpdate
+        // Define options for findOneAndUpdate
         const options = {
             upsert: true, // Create a new document if not found
             new: true, // Return the updated document
@@ -161,7 +165,6 @@ router.get('/event/scramble/code/claim', authJWT, async (req, res) => {
                 return res.status(400).json({ message: 'You already claimed this code!' });
             }
 
-
             // If something else happened just move error to the APIError class default responses.
             new APIError(fileName, err, res);
         });
@@ -169,14 +172,13 @@ router.get('/event/scramble/code/claim', authJWT, async (req, res) => {
         // Reponse with status 200 with the participant and code document object.
         if (!res.headersSent) {
 
-
-            // Run a aggregate to conbine all points from the codes in a specific range.
+            // Run a aggregate to conbine all points from codes in a specific range.
             const totalPoints = await mongoScrambleCode.aggregate([
                 { $match: { enabled: true } }, // Combine points only from enabled codes.
                 { $group: { _id: null, total: { $sum: '$difficulty' } } } // Sum points in that group.
             ]);
 
-            // Check if points are received. CHANGEME
+            // Check if points are received.
             if (!totalPoints[0]) return res.status(400).json({ message: 'There was an error processing the request.' });
 
             // Calculate the rank.
@@ -185,31 +187,113 @@ router.get('/event/scramble/code/claim', authJWT, async (req, res) => {
             // Assign the rank to the document.
             switch (true) {
                 case (percentage == 100):
-                    newRecord.rank = 'Challenger';
+                    newRecord.rank = scrambleRanks[5]; // 'Obsidian'
                     break;
                 case (percentage >= 80 && percentage < 100):
-                    newRecord.rank = 'Diamond';
+                    newRecord.rank = scrambleRanks[4]; // 'Diamond'
                     break;
                 case (percentage >= 60 && percentage < 80):
-                    newRecord.rank = 'Platinium';
+                    newRecord.rank = scrambleRanks[3]; // 'Platinium'
                     break;
                 case (percentage >= 40 && percentage < 60):
-                    newRecord.rank = 'Gold';
+                    newRecord.rank = scrambleRanks[2]; // 'Gold'
                     break;
                 case (percentage >= 20 && percentage < 40):
-                    newRecord.rank = 'Silver';
+                    newRecord.rank = scrambleRanks[1]; // 'Silver'
                     break;
                 default:
-                    newRecord.rank = 'Unranked';
+                    newRecord.rank = scrambleRanks[0]; // 'Unranked'
                     break;
             }
 
             // Save the document.
             newRecord.save();
 
-            // Send response.
+            // Send response to the requester.
             res.status(200).json({ participant: newRecord, code: codeDocument });
         }
+
+    } catch (error) {
+        new APIError(fileName, error, res);
+    }
+});
+
+router.get('/event/scramble/pick_winner', authJWT, async (req, res) => {
+    try {
+        // Destructuring assignment.
+        const { rank } = req.query;
+        let { amount } = req.query;
+
+        // Check if rank variable is provided.
+        if (!rank) return res.status(400).json({ message: 'You must provide rank name.' });
+
+        // Split rank on comma to get an array or ranks.
+        const rankArray = rank.split(',').map(item => item.trim());
+
+        // Check if rankArray contains ranks that are valid according to the scrambleRanks array.
+        const checkRankArray = rankArray.every(element => scrambleRanks.includes(element));
+
+        // If rank names are not correct.
+        if (!checkRankArray) return res.status(400).json({ message: 'The ranks given include ranks that are not correct according to the system.' });
+
+        // // Check if rank is correct.
+        // if (!rank && !scrambleRanks.includes(rank)) {
+        //     return res.status(400).json({ message: 'This rank is not allowed to be selected.' });
+        // }
+
+        // Change amount variable to a number.
+        if (!(typeof amount === 'number')) {
+            amount = Number(amount);
+        }
+
+        // Check if amount variable is a number.
+        if (isNaN(amount)) {
+            return res.status(400).json({ message: 'Amount variable must be a number.' });
+        }
+
+        // amount variable must be above 0 and below 50.
+        if (amount > 50 || amount < 1) {
+            return res.status(400).json({ message: 'Amount variable must be at least 1 and not exceed 50.' });
+        }
+
+        // Get a number of all documents for provided rank.
+        // const maxParticipants = await eventParticipant.countDocuments({ rank });
+        const maxParticipants = await eventParticipant.aggregate([
+
+            { // Match documents with the specified rank range.
+                $match: { rank: { $in: rankArray } }
+            },
+            { // Match documents with the specified rank range and count documents.
+                $group: { _id: null, count: { $sum: 1 } }
+            },
+            { // Reshape output to exclude _id field
+                $project: { _id: 0, count: 1 }
+            }
+        ]);
+
+        // In case if maxParticipants fails.
+        if (!maxParticipants[0]) return res.status(400).json({ message: 'There was an error processing the request.' });
+
+        // Run the aggregation pipeline.
+        const winners = await eventParticipant.aggregate([
+
+            { // Match documents with the specified rank range.
+                $match: { rank: { $in: rankArray } }
+            },
+            { // Randomly select documents by the amount specified.
+                $sample: { size: amount }
+            },
+            { // Reshape output to exclude _id field.
+                $project: { _id: 0 }
+            }
+        ]);
+
+        // Get a percentage of the total number of documents in the pipeline.
+        const calculatePercentage = (winners.length / maxParticipants[0].count) * 100;
+        const percentage = `${calculatePercentage.toFixed(2)}%`;
+
+        // Send the response to the requester.
+        res.status(200).json({ message: `Successfully aggregated ${winners.length} winner(s) (${percentage}) out of ${maxParticipants[0].count} participants from '${rank.toLowerCase()}' rank.`, winners, rank: rankArray, participants: maxParticipants[0].count, chances: `${percentage}` });
 
     } catch (error) {
         new APIError(fileName, error, res);
