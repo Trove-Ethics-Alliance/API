@@ -57,7 +57,7 @@ async function start() {
             } catch (error) {
                 log.bug('Error to start the application', error);
             }
-        }, 5000);
+        }, 10000);
     } catch (err) {
         log.bug('[STARTUP] Error to start up API Server.', err);
         process.exit(1);
