@@ -20,6 +20,7 @@
     "ascii-table": "^0.0.9",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",
+    "discord.js": "^14.12.1",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "glob": "^10.2.6",
