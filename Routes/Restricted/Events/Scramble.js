@@ -352,21 +352,36 @@ router.get('/event/scramble/remaining', authJWT, async (req, res) => {
 
             // Get a list of codes.
             const codeFilter = { enabled: true };
-            const codeProjection = { _id: 0, tip: 1 };
-            const guestCodes = await mongoScrambleCode.find(codeFilter, codeProjection);
+            const codeProjection = { _id: 0, id: 1, tip: 1 };
+            const limitAmount = 50; // Limit the result to 50 documents
+
+            const guestCodes = await mongoScrambleCode.aggregate([
+                { $match: codeFilter }, // Match documents based on the filter
+                { $sample: { size: limitAmount } }, // Randomly select documents
+                { $limit: limitAmount }, // Limit the result to the specified number of documents
+                { $project: codeProjection } // Project only specific fields in the result
+            ]);
 
             // Response with status 200 when there is no user registered so return all available hints.
             return res.status(200).json({ response: formatHints(guestCodes) ? `## > Scramble Event Hints\n${formatHints(guestCodes)}` : 'No hints are found, but that doen\'t mean there are no more codes to claim <:rooBlank:663231559557709835>' });
         }
 
         // Get a list of codes that are not in the user's list.
+
         const codeFilter = { id: { $nin: getUser.codes } };
         const codeProjection = { _id: 0, id: 1, tip: 1 };
-        const remainingCodes = await mongoScrambleCode.find(codeFilter, codeProjection);
+        const limitAmount = 50; // Limit the result to 50 documents
+
+        const remainingCodes = await mongoScrambleCode.aggregate([
+            { $match: codeFilter }, // Match documents based on the filter
+            { $sample: { size: limitAmount } }, // Randomly select documents
+            { $limit: limitAmount }, // Limit the result to the specified number of documents
+            { $project: codeProjection } // Project only specific fields in the result
+        ]);
 
         // Full response with status 200.
         const userInfoString = `You have **${getUser.points}** point(s) collected which place you in **${getUser.rank?.toLowerCase()}** bracket.\n> **${getUser.codes.length}** code(s) found and there is **${remainingCodes.length}** left to find.`;
-        const hintString = `${formatHints(remainingCodes).length > 0 ? `\n## > Remaining hints\n${formatHints(remainingCodes)}` : `\nThere are no additional hints available, but there is a chance that some codes are still there <:rooBlank:663231559557709835>`}`;
+        const hintString = `${remainingCodes.length > 0 ? `\n## > Remaining hints\n${formatHints(remainingCodes)}` : `\nThere are no additional hints available, but there is a chance that some codes are still there <:rooBlank:663231559557709835>`}`;
         res.status(200).json({ response: userInfoString + hintString });
 
         function formatHints(codesArray) {
@@ -385,6 +400,7 @@ router.get('/event/scramble/remaining', authJWT, async (req, res) => {
                 }
             });
 
+            // Return the list of tips as a string.
             return tipArray.join('\n');
         }
 
